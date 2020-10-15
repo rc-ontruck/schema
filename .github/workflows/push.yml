@@ -1,0 +1,61 @@
+name: 'Continuous Integration'
+on:
+  push:
+    branches-ignore:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+jobs:
+  unit-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-16.04, ubuntu-18.04]
+        node-version: [10.x, 12.x]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2-beta
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Run unit tests
+      run: |
+        npm install -g npm
+        npm install
+        npm run test
+  integration-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-16.04, ubuntu-18.04]
+        node-version: [10.x, 12.x]
+    env:
+      ES_VERSION: 7.6.1
+      JDK_VERSION: oraclejdk11
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2-beta
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Run unit tests
+      run: |
+        ./scripts/setup_ci.sh
+        npm install -g npm
+        npm install
+        curl http://127.0.0.1:9200/
+        ./bin/create_index
+        npm run integration
+  npm-publish:
+    needs: [unit-tests, integration-tests]
+    if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Install node.js 12.x
+      uses: actions/setup-node@v2-beta
+      with:
+        node-version: 12.x
+    - name: Run semantic-release
+      run: |
+        npm install -g npm
+        npm install --production
+        curl "https://raw.githubusercontent.com/pelias/ci-tools/master/semantic-release.sh" | bash -
