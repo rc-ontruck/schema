@@ -22,21 +22,24 @@ jobs:
         npm install
         npm run test
   integration-tests:
+    needs: unit-tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-16.04, ubuntu-18.04]
         node-version: [10.x, 12.x]
+        es-version: [7.6.1, 7.9.2]
+        jdk-version: [oraclejdk11]
     env:
-      ES_VERSION: 7.6.1
-      JDK_VERSION: oraclejdk11
+      ES_VERSION: ${{ matrix.es-version }}
+      JDK_VERSION: ${{ matrix.jdk-version }}
     steps:
     - uses: actions/checkout@v2
     - name: Install node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2-beta
       with:
         node-version: ${{ matrix.node-version }}
-    - name: Run unit tests
+    - name: Run integration tests
       run: |
         ./scripts/setup_ci.sh
         npm install -g npm
