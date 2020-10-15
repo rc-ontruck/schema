@@ -30,18 +30,19 @@ jobs:
         node-version: [10.x, 12.x]
         es-version: [7.6.1, 7.9.2]
         jdk-version: [oraclejdk11]
-    env:
-      ES_VERSION: ${{ matrix.es-version }}
-      JDK_VERSION: ${{ matrix.jdk-version }}
     steps:
     - uses: actions/checkout@v2
     - name: Install node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2-beta
       with:
         node-version: ${{ matrix.node-version }}
+    - name: Start elasticsearch ${{ matrix.es-version }} (${{ matrix.jdk-version }})
+      env:
+        ES_VERSION: ${{ matrix.es-version }}
+        JDK_VERSION: ${{ matrix.jdk-version }}
+      run: ./scripts/setup_ci.sh
     - name: Run integration tests
       run: |
-        ./scripts/setup_ci.sh
         npm install -g npm
         npm install
         curl http://127.0.0.1:9200/
